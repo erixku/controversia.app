@@ -1,0 +1,38 @@
+@import "tailwindcss";
+/* Hide scrollbars but keep scrolling */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+
+body {
+  font-family: 'EB Garamond', serif;
+  background-color: #000000;
+  color: #ffffff;
+}
+
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: 'Syne', sans-serif;
+}
+
+/* Custom Scrollbar for Chrome/Safari/Webkit */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000; 
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333; 
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #fff; 
+}
