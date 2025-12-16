@@ -63,15 +63,20 @@ const AuthCallbackHandler = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!loading && user) {
-            // Sempre vai para setup-profile primeiro
-            // Se já tiver perfil completo, o próprio SetupProfile pode redirecionar
-            navigate('/setup-profile');
-        } else if (!loading && !user) {
-            // Se não conseguiu autenticar, volta para login
-            setTimeout(() => navigate('/login'), 2000);
+        if (!loading) {
+            if (user) {
+                // Se tem usuário, verifica se tem perfil completo
+                if (profile && profile.username) {
+                    navigate('/hub');
+                } else {
+                    navigate('/setup-profile');
+                }
+            } else {
+                // Se não conseguiu autenticar, volta para login
+                setTimeout(() => navigate('/login'), 2000);
+            }
         }
-    }, [user, loading, navigate]);
+    }, [user, profile, loading, navigate]);
 
     return (
         <div className="flex items-center justify-center h-screen bg-black text-white">

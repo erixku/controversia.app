@@ -69,6 +69,10 @@ const GameRoom: React.FC = () => {
   const [gameCards, setGameCards] = useState<any[]>([]);
   const [pendingCards, setPendingCards] = useState<any[]>([]);
   const [gameName, setGameName] = useState('');
+  const [decks, setDecks] = useState<any[]>([]);
+  const [selectedDeckId, setSelectedDeckId] = useState<string>('');
+  const [addingDeck, setAddingDeck] = useState(false);
+  const [clearingCards, setClearingCards] = useState(false);
   const [publishLoading, setPublishLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [adminError, setAdminError] = useState<string | null>(null);
@@ -79,6 +83,7 @@ const GameRoom: React.FC = () => {
   const blackCardRef = useRef<HTMLDivElement>(null);
   const playedCardsRef = useRef<HTMLDivElement>(null);
   const autoNextRoundTimerRef = useRef<number | null>(null);
+  const isLeavingRef = useRef(false);
 
   const setGameplayErrorFromSupabase = (error: any) => {
     const message = String(error?.message || error?.details || error || '');
@@ -221,8 +226,39 @@ const GameRoom: React.FC = () => {
 
     return () => {
         supabase.removeChannel(channel);
+        
+        // Remove player from room on unmount
+        if (id && profile && !isLeavingRef.current) {
+            supabase.from('game_players').delete().match({ game_id: id, player_id: profile.id }).then();
+        }
     };
   }, [id, profile]);
+
+  // Handle browser tab close / refresh
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+        if (id && profile) {
+            // Best effort to remove player
+            supabase.from('game_players').delete().match({ game_id: id, player_id: profile.id }).then();
+        }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [id, profile]);
+
+  const handleLeaveRoom = async () => {
+      if (!id || !profile) return;
+      isLeavingRef.current = true;
+      
+      try {
+          await supabase.from('game_players').delete().match({ game_id: id, player_id: profile.id });
+      } catch (error) {
+          console.error("Erro ao sair da sala:", error);
+      } finally {
+          navigate('/hub');
+      }
+  };
 
   const fetchPlayers = async () => {
       if (!id) return;
@@ -620,6 +656,8 @@ const GameRoom: React.FC = () => {
   };
 
   const handleApproveCard = async (cardId: string) => {
+    const card = pendingCards.find(c => c.id === cardId);
+
     try {
       const { error } = await supabase
         .from('cards')
@@ -627,7 +665,28 @@ const GameRoom: React.FC = () => {
         .eq('id', cardId);
 
       if (error) throw error;
-      setAdminSuccess('Carta aprovada!');
+
+      // Add to deck if selected
+      if (selectedDeckId && card) {
+          const { error: deckError } = await supabase
+            .from('deck_cards')
+            .insert({
+                deck_id: selectedDeckId,
+                text: card.text,
+                type: card.type,
+                status: 'approved'
+            });
+            
+          if (deckError) {
+             console.error("Erro ao salvar no deck:", deckError);
+             setAdminSuccess('Carta aprovada (erro ao salvar no deck)');
+          } else {
+             setAdminSuccess('Carta aprovada e salva no deck!');
+          }
+      } else {
+          setAdminSuccess('Carta aprovada!');
+      }
+
       fetchPendingCards();
       fetchGameCards();
       setTimeout(() => setAdminSuccess(null), 3000);
@@ -697,6 +756,41 @@ const GameRoom: React.FC = () => {
     }
   };
 
+  const handleStartGame = async () => {
+    if (!isOwner || !id) return;
+    if (players.length < 3) {
+        alert("É necessário ter pelo menos 3 jogadores para iniciar.");
+        return;
+    }
+
+    try {
+        const { error } = await supabase.rpc('start_round', { p_game_id: id });
+
+        if (error) throw error;
+    } catch (error: any) {
+        console.error("Erro ao iniciar jogo:", error);
+        alert(error.message || "Erro ao iniciar jogo.");
+    }
+  };
+
+  const handleEndGame = async () => {
+    if (!isOwner || !id) return;
+    if (!confirm("Tem certeza que deseja terminar o jogo?")) return;
+
+    try {
+        const { error } = await supabase
+            .from('games')
+            .update({ status: 'finished' })
+            .eq('id', id);
+
+        if (error) throw error;
+        navigate('/hub');
+    } catch (error: any) {
+        console.error("Erro ao terminar jogo:", error);
+        alert(error.message || "Erro ao terminar jogo.");
+    }
+  };
+
   const handleDeleteCard = async (cardId: string) => {
     if (!isOwner) return;
     if (!confirm('Tem certeza que deseja remover esta carta?')) return;
@@ -741,10 +835,102 @@ const GameRoom: React.FC = () => {
     }
   };
 
+  const fetchDecks = async () => {
+    if (!profile) return;
+    
+    const { data } = await supabase
+      .from('decks')
+      .select(`
+        *,
+        deck_cards(count)
+      `)
+      .eq('created_by', profile.id)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    if (data && data.length > 0) {
+      setDecks(data);
+      if (!selectedDeckId) {
+          const defaultDeck = data.find(d => d.is_default);
+          setSelectedDeckId(defaultDeck?.id || data[0].id);
+      }
+    }
+  };
+
+  const handleAddDeck = async () => {
+    if (!selectedDeckId || !id) return;
+    setAddingDeck(true);
+    setAdminError(null);
+
+    try {
+        // Buscar cartas do deck
+        const { data: deckCards, error: cardsError } = await supabase
+            .from('deck_cards')
+            .select('*')
+            .eq('deck_id', selectedDeckId)
+            .eq('status', 'approved');
+
+        if (cardsError) throw cardsError;
+
+        if (deckCards && deckCards.length > 0) {
+            const cardsToInsert = deckCards.map(card => ({
+                game_id: id,
+                type: card.type,
+                text: card.text,
+                status: 'approved',
+                created_by: null,
+                created_at: new Date().toISOString()
+            }));
+
+            const { error: insertError } = await supabase
+                .from('cards')
+                .insert(cardsToInsert);
+
+            if (insertError) throw insertError;
+            
+            setAdminSuccess(`${deckCards.length} cartas adicionadas com sucesso!`);
+            setTimeout(() => setAdminSuccess(null), 3000);
+            fetchGameCards();
+        } else {
+            setAdminError('Este deck não possui cartas aprovadas.');
+        }
+    } catch (error: any) {
+        setAdminError(error.message || 'Erro ao adicionar deck');
+    } finally {
+        setAddingDeck(false);
+    }
+  };
+
+  const handleClearCards = async () => {
+    if (!id) return;
+    if (!confirm('Tem certeza que deseja apagar TODAS as cartas do jogo? Esta ação não pode ser desfeita.')) return;
+    
+    setClearingCards(true);
+    setAdminError(null);
+
+    try {
+        const { error } = await supabase
+            .from('cards')
+            .delete()
+            .eq('game_id', id);
+
+        if (error) throw error;
+
+        setAdminSuccess('Todas as cartas foram removidas.');
+        setTimeout(() => setAdminSuccess(null), 3000);
+        setGameCards([]);
+    } catch (error: any) {
+        setAdminError(error.message || 'Erro ao limpar cartas');
+    } finally {
+        setClearingCards(false);
+    }
+  };
+
   useEffect(() => {
     if (isAdminModalOpen && isOwner) {
       fetchGameCards();
       fetchPendingCards();
+      fetchDecks();
     }
   }, [isAdminModalOpen, isOwner]);
 
@@ -765,7 +951,7 @@ const GameRoom: React.FC = () => {
 
       {/* DELETE CONFIRMATION MODAL */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[160] flex items-center justify-center p-4">
           <div className="bg-neutral-900 border-2 border-violet-700 max-w-md w-full">
             <div className="bg-violet-700/20 border-b border-violet-700 p-6">
               <h2 className="text-2xl font-display font-bold uppercase text-violet-700 flex items-center gap-3">
@@ -814,7 +1000,7 @@ const GameRoom: React.FC = () => {
 
       {/* ADMIN MODAL */}
       {isAdminModalOpen && isOwner && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-700 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-neutral-900 border-b border-neutral-800 p-6 flex justify-between items-center">
               <h2 className="text-2xl font-display font-bold uppercase">Configurações do Jogo</h2>
@@ -930,9 +1116,47 @@ const GameRoom: React.FC = () => {
 
               {/* Cartas do Jogo */}
               <div className="border-t border-neutral-800 pt-6">
-                <h3 className="font-display font-bold text-lg mb-3 uppercase">
-                  Cartas do Jogo ({gameCards.length})
-                </h3>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                    <h3 className="font-display font-bold text-lg uppercase">
+                    Cartas do Jogo ({gameCards.length})
+                    </h3>
+                    
+                    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                        {decks.length > 0 && (
+                            <div className="flex gap-2">
+                                <select
+                                    value={selectedDeckId}
+                                    onChange={(e) => setSelectedDeckId(e.target.value)}
+                                    className="bg-neutral-800 border border-neutral-700 text-white text-xs px-2 py-1.5 focus:outline-none focus:border-white font-serif max-w-[150px]"
+                                >
+                                    {decks.map(deck => (
+                                        <option key={deck.id} value={deck.id}>
+                                            {deck.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    onClick={handleAddDeck}
+                                    disabled={addingDeck}
+                                    className="px-3 py-1.5 bg-white text-black text-xs font-display font-bold uppercase hover:bg-neutral-200 disabled:opacity-50 whitespace-nowrap"
+                                >
+                                    {addingDeck ? '...' : '+ Deck'}
+                                </button>
+                            </div>
+                        )}
+                        
+                        {gameCards.length > 0 && (
+                            <button
+                                onClick={handleClearCards}
+                                disabled={clearingCards}
+                                className="px-3 py-1.5 border border-red-900 text-red-500 text-xs font-display font-bold uppercase hover:bg-red-900/20 disabled:opacity-50 whitespace-nowrap"
+                            >
+                                {clearingCards ? '...' : 'Limpar Tudo'}
+                            </button>
+                        )}
+                    </div>
+                </div>
+
                 {gameCards.length === 0 ? (
                   <p className="text-neutral-500 font-serif italic text-center py-8">
                     Nenhuma carta cadastrada ainda.
@@ -942,18 +1166,26 @@ const GameRoom: React.FC = () => {
                     {gameCards.map((card) => (
                       <div
                         key={card.id}
-                        className="flex items-center justify-between bg-neutral-800 border border-neutral-700 p-4 hover:border-neutral-600 transition-colors"
+                        className={`flex items-center justify-between border p-4 transition-colors ${
+                            card.type === 'white' 
+                                ? 'bg-white border-neutral-300 text-black' 
+                                : 'bg-black border-neutral-700 text-white'
+                        }`}
                       >
                         <div className="flex-1">
-                          <p className="font-serif text-white">{card.text}</p>
-                          <p className="text-xs text-neutral-500 mt-1">
+                          <p className="font-display font-bold text-lg leading-tight">{card.text}</p>
+                          <p className={`text-xs mt-2 ${card.type === 'white' ? 'text-neutral-500' : 'text-neutral-400'}`}>
                             Tipo: {card.type === 'white' ? 'Branca' : 'Preta'} • 
                             Criado em {new Date(card.created_at).toLocaleDateString('pt-BR')}
                           </p>
                         </div>
                         <button
                           onClick={() => handleDeleteCard(card.id)}
-                          className="ml-4 px-3 py-1 text-sm text-white border border-neutral-700 hover:border-violet-700 hover:text-violet-700 transition-colors"
+                          className={`ml-4 px-3 py-1 text-xs font-display font-bold uppercase border transition-colors ${
+                              card.type === 'white'
+                                ? 'border-neutral-300 text-neutral-500 hover:border-red-500 hover:text-red-500'
+                                : 'border-neutral-700 text-neutral-500 hover:border-red-500 hover:text-red-500'
+                          }`}
                         >
                           Remover
                         </button>
@@ -991,7 +1223,7 @@ const GameRoom: React.FC = () => {
       {/* --- TOP BAR: INFO & OPPONENTS --- */}
       <div className="h-20 bg-black border-b border-neutral-800 flex items-center justify-between px-6 z-20">
         <div className="flex items-center space-x-4">
-            <button onClick={() => navigate('/hub')} className="text-white hover:text-neutral-400 font-display text-sm">
+            <button onClick={handleLeaveRoom} className="text-white hover:text-neutral-400 font-display text-sm">
                 ← SAIR
             </button>
             <div className="h-8 w-px bg-neutral-800" />
@@ -1007,12 +1239,36 @@ const GameRoom: React.FC = () => {
         
         <div className="flex items-center space-x-6">
             {isOwner && (
-                <button 
-                    onClick={() => setIsAdminModalOpen(true)}
-                    className="flex items-center space-x-2 text-xs font-display font-bold uppercase tracking-widest text-neutral-400 hover:text-white transition-colors border border-neutral-700 hover:border-white px-3 py-1.5 rounded-sm"
-                >
-                    <span>Configurações</span>
-                </button>
+                <>
+                    {roomData?.status === 'waiting' ? (
+                        <button 
+                            onClick={handleStartGame}
+                            disabled={players.length < 3}
+                            className={`flex items-center space-x-2 text-xs font-display font-bold uppercase tracking-widest transition-colors border px-3 py-1.5 rounded-sm ${
+                                players.length < 3 
+                                    ? 'text-neutral-600 border-neutral-800 cursor-not-allowed' 
+                                    : 'text-black bg-white border-white hover:bg-neutral-200'
+                            }`}
+                            title={players.length < 3 ? "Mínimo de 3 jogadores" : "Iniciar o jogo"}
+                        >
+                            <span>Iniciar Jogo</span>
+                        </button>
+                    ) : roomData?.status === 'in_progress' ? (
+                        <button 
+                            onClick={handleEndGame}
+                            className="flex items-center space-x-2 text-xs font-display font-bold uppercase tracking-widest text-red-500 hover:text-red-400 transition-colors border border-red-900/50 hover:border-red-500 px-3 py-1.5 rounded-sm"
+                        >
+                            <span>Terminar Jogo</span>
+                        </button>
+                    ) : null}
+
+                    <button 
+                        onClick={() => setIsAdminModalOpen(true)}
+                        className="flex items-center space-x-2 text-xs font-display font-bold uppercase tracking-widest text-neutral-400 hover:text-white transition-colors border border-neutral-700 hover:border-white px-3 py-1.5 rounded-sm"
+                    >
+                        <span>Configurações</span>
+                    </button>
+                </>
             )}
             
             <button 

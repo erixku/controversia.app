@@ -60,7 +60,8 @@ const Login = () => {
             const { error } = await supabase.auth.signInWithOtp({
                 email,
                 options: {
-                    emailRedirectTo: `${currentOrigin}/#/setup-profile`,
+                    // Redireciona para a raiz. O AuthCallbackHandler no App.tsx decidirá o destino (Hub ou Setup)
+                    emailRedirectTo: currentOrigin,
                 }
             });
 
@@ -74,8 +75,8 @@ const Login = () => {
                 email,
                 password,
                 options: {
-                    // Redireciona para a raiz do site atual
-                    emailRedirectTo: `${currentOrigin}/#/setup-profile`, 
+                    // Redireciona para a raiz. O AuthCallbackHandler enviará para SetupProfile pois não haverá perfil ainda.
+                    emailRedirectTo: currentOrigin, 
                 }
             });
 
