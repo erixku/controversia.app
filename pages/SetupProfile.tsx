@@ -185,8 +185,8 @@ const SetupProfile: React.FC = () => {
   }
 
   return (
-    <div className="flex-grow flex items-center justify-center p-6 pt-24 relative">
-      <div className="w-full max-w-md bg-black border border-neutral-800 p-8 md:p-12 relative z-10 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="flex-grow flex items-center justify-center px-4 sm:px-6 py-6 pt-24 relative">
+            <div className="w-full max-w-md bg-black border border-neutral-800 p-6 sm:p-8 md:p-12 relative z-10 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="mb-8 text-center">
             <h2 className="text-3xl font-display font-bold mb-2 uppercase">Identidade</h2>
             <p className="font-serif italic text-neutral-500">

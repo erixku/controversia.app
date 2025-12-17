@@ -199,13 +199,13 @@ const GameHub: React.FC = () => {
   if (authLoading) return <div className="min-h-screen bg-black" />;
 
   return (
-    <div className="flex-grow w-full max-w-7xl mx-auto px-6 md:px-12 pb-12 pt-28 md:pt-36">
+    <div className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-12 pt-24 md:pt-36">
       
       {/* Modal de Criação de Jogo */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-700 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-neutral-900 border-b border-neutral-800 p-6 flex justify-between items-center z-10">
+            <div className="sticky top-0 bg-neutral-900 border-b border-neutral-800 p-4 md:p-6 flex justify-between items-center z-10">
               <h2 className="text-2xl font-display font-bold uppercase">Criar Nova Sala</h2>
               <button 
                 onClick={() => {
@@ -219,7 +219,7 @@ const GameHub: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 md:p-6 space-y-6">
               {/* Nome do Jogo */}
               <div>
                 <label className="block font-display text-sm font-bold uppercase tracking-wider mb-2 text-neutral-300">

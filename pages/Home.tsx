@@ -122,26 +122,26 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-full min-h-[calc(100vh-80px)] flex flex-col items-center justify-center overflow-hidden p-6 pt-20">
+    <div className="relative w-full h-full min-h-[calc(100vh-80px)] flex flex-col items-center justify-center overflow-hidden px-4 sm:px-6 pt-20 pb-6">
       <div ref={cardContainerRef} className="absolute inset-0 z-0 pointer-events-none opacity-40 overflow-hidden" />
       <div className="z-10 text-center max-w-4xl mx-auto flex flex-col items-center">
         <h1 
             ref={titleRef} 
-            className="text-6xl md:text-9xl font-display font-bold uppercase tracking-tighter mb-6 leading-none mix-blend-difference opacity-0"
+            className="text-5xl sm:text-6xl md:text-9xl font-display font-bold uppercase tracking-tighter mb-6 leading-none mix-blend-difference opacity-0"
         >
           Contro<br/>versia
         </h1>
         <p 
             ref={subtitleRef} 
-            className="text-xl md:text-3xl font-serif italic text-neutral-400 mb-12 max-w-2xl opacity-0"
+            className="text-base sm:text-xl md:text-3xl font-serif italic text-neutral-400 mb-10 sm:mb-12 max-w-2xl opacity-0"
         >
           O jogo de cartas onde a moralidade é opcional e o humor negro é mandatório.
         </p>
         <div ref={buttonsRef} className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6 opacity-0">
-          <Button onClick={() => navigate('/login')} className="md:px-12 md:py-4 md:text-lg">
+          <Button onClick={() => navigate('/login')} className="w-full md:w-auto md:px-12 md:py-4 md:text-lg">
             Iniciar Partida
           </Button>
-          <Button variant="outline" onClick={() => navigate('/sobre')} className="md:px-12 md:py-4 md:text-lg">
+          <Button variant="outline" onClick={() => navigate('/sobre')} className="w-full md:w-auto md:px-12 md:py-4 md:text-lg">
             Entender o Conceito
           </Button>
         </div>

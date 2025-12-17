@@ -199,10 +199,10 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div className="flex-grow flex flex-col items-center p-6 pt-28 pb-12 relative">
+    <div className="flex-grow flex flex-col items-center px-4 sm:px-6 pt-24 md:pt-28 pb-12 relative">
       <div className="w-full max-w-4xl">
         {/* Header do Perfil */}
-        <div className="bg-black border border-neutral-800 p-8 mb-6 text-center">
+        <div className="bg-black border border-neutral-800 p-6 md:p-8 mb-6 text-center">
           <div className="flex flex-col items-center mb-4">
             {profile?.avatar_url && (
               <AvatarImage
@@ -230,10 +230,10 @@ const Profile: React.FC = () => {
         )}
 
         {/* Tabs */}
-        <div className="flex border-b border-neutral-800 mb-6">
+        <div className="flex flex-wrap border-b border-neutral-800 mb-6">
           <button
             onClick={() => setActiveTab('info')}
-            className={`px-6 py-3 font-display uppercase text-sm tracking-wider transition-colors ${
+            className={`px-4 md:px-6 py-3 font-display uppercase text-xs sm:text-sm tracking-wider transition-colors ${
               activeTab === 'info' 
                 ? 'border-b-2 border-white text-white' 
                 : 'text-neutral-500 hover:text-white'
@@ -243,7 +243,7 @@ const Profile: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('password')}
-            className={`px-6 py-3 font-display uppercase text-sm tracking-wider transition-colors ${
+            className={`px-4 md:px-6 py-3 font-display uppercase text-xs sm:text-sm tracking-wider transition-colors ${
               activeTab === 'password' 
                 ? 'border-b-2 border-white text-white' 
                 : 'text-neutral-500 hover:text-white'
@@ -253,7 +253,7 @@ const Profile: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('games')}
-            className={`px-6 py-3 font-display uppercase text-sm tracking-wider transition-colors ${
+            className={`px-4 md:px-6 py-3 font-display uppercase text-xs sm:text-sm tracking-wider transition-colors ${
               activeTab === 'games' 
                 ? 'border-b-2 border-white text-white' 
                 : 'text-neutral-500 hover:text-white'
@@ -264,7 +264,7 @@ const Profile: React.FC = () => {
         </div>
 
         {/* Conteúdo das Tabs */}
-        <div className="bg-black border border-neutral-800 p-8">
+        <div className="bg-black border border-neutral-800 p-6 md:p-8">
           {/* Tab: Informações */}
           {activeTab === 'info' && (
             <form onSubmit={handleUpdateProfile} className="space-y-6">

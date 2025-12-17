@@ -1266,14 +1266,15 @@ const GameRoom: React.FC = () => {
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] brightness-100 contrast-150"></div>
 
       {/* --- TOP BAR: INFO & OPPONENTS --- */}
-      <div className="h-20 bg-black border-b border-neutral-800 flex items-center justify-between px-6 z-20">
-        <div className="flex items-center space-x-4">
-            <button onClick={handleLeaveRoom} className="text-white hover:text-neutral-400 font-display text-sm">
-                ← SAIR
-            </button>
+        <div className="h-20 bg-black border-b border-neutral-800 flex items-center justify-between px-4 md:px-6 z-20">
+        <div className="flex items-center space-x-3 md:space-x-4 min-w-0">
+          <button onClick={handleLeaveRoom} className="text-white hover:text-neutral-400 font-display text-sm flex-shrink-0">
+            <span className="md:hidden">←</span>
+            <span className="hidden md:inline">← SAIR</span>
+          </button>
             <div className="h-8 w-px bg-neutral-800" />
-            <div>
-                <h2 className="font-display font-bold text-lg leading-none">
+          <div className="min-w-0">
+            <h2 className="font-display font-bold text-base md:text-lg leading-none truncate">
                     {roomData?.code ? `SALA: ${roomData.code}` : 'SALA'}
                 </h2>
                 <p className="text-xs text-neutral-500 font-serif italic">
@@ -1282,7 +1283,7 @@ const GameRoom: React.FC = () => {
             </div>
         </div>
         
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-3 md:space-x-6 flex-shrink-0">
             {isOwner && (
                 <>
                     {roomData?.status === 'waiting' ? (
@@ -1296,14 +1297,16 @@ const GameRoom: React.FC = () => {
                             }`}
                             title={players.length < 3 ? "Mínimo de 3 jogadores" : "Iniciar o jogo"}
                         >
-                            <span>Iniciar Jogo</span>
+                  <span className="md:hidden">Iniciar</span>
+                  <span className="hidden md:inline">Iniciar Jogo</span>
                         </button>
                     ) : roomData?.status === 'in_progress' ? (
                         <button 
                             onClick={handleEndGame}
                         className="flex items-center space-x-2 text-xs font-display font-bold uppercase tracking-widest text-violet-700 hover:text-violet-600 transition-colors border border-violet-700/30 hover:border-violet-700 px-3 py-1.5 rounded-sm"
                         >
-                            <span>Terminar Jogo</span>
+                  <span className="md:hidden">Terminar</span>
+                  <span className="hidden md:inline">Terminar Jogo</span>
                         </button>
                     ) : null}
 
@@ -1311,7 +1314,8 @@ const GameRoom: React.FC = () => {
                         onClick={() => setIsAdminModalOpen(true)}
                         className="flex items-center space-x-2 text-xs font-display font-bold uppercase tracking-widest text-neutral-400 hover:text-white transition-colors border border-neutral-700 hover:border-white px-3 py-1.5 rounded-sm"
                     >
-                        <span>Configurações</span>
+                <span className="md:hidden">Config</span>
+                <span className="hidden md:inline">Configurações</span>
                     </button>
                 </>
             )}
@@ -1324,11 +1328,11 @@ const GameRoom: React.FC = () => {
             </button>
 
             {/* Real Opponents Avatars */}
-            <div className="flex -space-x-3">
+            <div className="flex -space-x-2 md:-space-x-3">
                 {players.map((p, i) => (
                     <div 
                         key={p.id} 
-                        className="w-10 h-10 rounded-full border-2 border-black bg-neutral-800 flex items-center justify-center overflow-hidden hover:-translate-y-2 transition-transform cursor-help relative group" 
+                  className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-black bg-neutral-800 flex items-center justify-center overflow-hidden hover:-translate-y-2 transition-transform cursor-help relative group" 
                         title={`${p.profile?.username}: ${p.score} Pontos`}
                     >
                         {p.profile?.avatar_url ? (
@@ -1505,11 +1509,11 @@ const GameRoom: React.FC = () => {
 
                 {/* Horizontal scroller (no vertical scroll). We keep plenty of internal padding so transformed cards never clip. */}
                 <div className="no-scrollbar overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth w-full">
-                  <div className={`flex items-end justify-center w-max mx-auto px-28 md:px-36 overflow-visible ${
+                  <div className={`flex items-end justify-center w-max mx-auto px-10 sm:px-16 md:px-36 overflow-visible [--cardOverlap:-2.25rem] sm:[--cardOverlap:-2.75rem] md:[--cardOverlap:-3rem] ${
                     // Extra top padding keeps hover/selected lifts + tooltip fully inside the scroller (no clipping)
                     playedCards.some(card => isMyCard(card)) ? 'pt-20 pb-10' : 'pt-28 pb-16'
                   }`}>
-                    <div className="w-20 md:w-28 flex-shrink-0" />
+                    <div className="w-8 sm:w-14 md:w-28 flex-shrink-0" />
                     {hand.map((card, index) => {
                       const totalCards = hand.length;
                       const middleIndex = (totalCards - 1) / 2;
@@ -1530,7 +1534,7 @@ const GameRoom: React.FC = () => {
                           } ${isCzar ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                           [transform:rotate(var(--rot))_translateY(var(--fanY))_translateY(var(--lift,0px))_scale(var(--scale,1))]`}
                           style={{
-                            marginLeft: index === 0 ? '0' : '-3rem',
+                            marginLeft: index === 0 ? '0' : 'var(--cardOverlap)',
                             // CSS variables for stable transforms (avoids Tailwind translate + inline transform conflicts)
                             ['--rot' as any]: `${rotation}deg`,
                             ['--fanY' as any]: `${fanY}px`,
@@ -1550,7 +1554,7 @@ const GameRoom: React.FC = () => {
                         </div>
                       );
                     })}
-                    <div className="w-20 md:w-28 flex-shrink-0" />
+                    <div className="w-8 sm:w-14 md:w-28 flex-shrink-0" />
                   </div>
                 </div>
               </div>

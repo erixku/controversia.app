@@ -228,15 +228,15 @@ const Decks: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-28 md:py-36">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 md:py-36">
         
         {/* Header */}
-        <div className="flex items-center justify-between mb-12">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl md:text-5xl font-display font-bold uppercase mb-2">Meus Decks</h1>
             <p className="text-neutral-400 font-serif">Gerencie suas coleções de cartas</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setShowCloneModal(true)}
               className="px-4 py-2 border border-neutral-700 text-white hover:border-white transition-colors font-display font-bold uppercase"

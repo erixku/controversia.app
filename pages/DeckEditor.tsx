@@ -296,25 +296,25 @@ const DeckEditor: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-28 md:py-36">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 md:py-36">
         
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
+          <div className="flex items-start gap-4 min-w-0">
             <button
               onClick={() => navigate('/decks')}
               className="text-neutral-400 hover:text-white transition-colors"
             >
               ← Voltar
             </button>
-            <div>
-              <h1 className="text-4xl md:text-5xl font-display font-bold uppercase">{deck?.name}</h1>
+            <div className="min-w-0">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold uppercase truncate">{deck?.name}</h1>
               <p className="text-neutral-400 font-serif mt-2">
                 {cards.length} cartas • {blackCards.length} pretas • {whiteCards.length} brancas
               </p>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <label className="relative">
               <input
                 type="file"
@@ -350,10 +350,10 @@ const DeckEditor: React.FC = () => {
         )}
 
         {/* Filtros */}
-        <div className="flex gap-3 mb-8">
+        <div className="flex flex-wrap gap-2 md:gap-3 mb-8">
           <button
             onClick={() => setFilterType('all')}
-            className={`px-4 py-2 font-display font-bold uppercase text-sm transition-colors ${
+            className={`px-3 md:px-4 py-2 font-display font-bold uppercase text-xs sm:text-sm transition-colors ${
               filterType === 'all'
                 ? 'bg-white text-black'
                 : 'border border-neutral-700 text-neutral-400 hover:border-white hover:text-white'
@@ -363,7 +363,7 @@ const DeckEditor: React.FC = () => {
           </button>
           <button
             onClick={() => setFilterType('black')}
-            className={`px-4 py-2 font-display font-bold uppercase text-sm transition-colors ${
+            className={`px-3 md:px-4 py-2 font-display font-bold uppercase text-xs sm:text-sm transition-colors ${
               filterType === 'black'
                 ? 'bg-neutral-800 text-white border border-neutral-600'
                 : 'border border-neutral-700 text-neutral-400 hover:border-white hover:text-white'
@@ -373,7 +373,7 @@ const DeckEditor: React.FC = () => {
           </button>
           <button
             onClick={() => setFilterType('white')}
-            className={`px-4 py-2 font-display font-bold uppercase text-sm transition-colors ${
+            className={`px-3 md:px-4 py-2 font-display font-bold uppercase text-xs sm:text-sm transition-colors ${
               filterType === 'white'
                 ? 'bg-white text-black'
                 : 'border border-neutral-700 text-neutral-400 hover:border-white hover:text-white'
@@ -397,13 +397,13 @@ const DeckEditor: React.FC = () => {
                 setCardType(filterType === 'all' ? 'white' : filterType);
                 setShowAddModal(true);
               }}
-              className="px-6 py-3 bg-white text-black font-display font-bold uppercase hover:bg-neutral-200 transition-colors"
+              className="px-5 md:px-6 py-3 bg-white text-black font-display font-bold uppercase hover:bg-neutral-200 transition-colors"
             >
               Adicionar Carta
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
             {filteredCards.map(card => (
               <div key={card.id} className="relative group">
                 <PlayingCard

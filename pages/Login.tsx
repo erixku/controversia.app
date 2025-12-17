@@ -145,8 +145,8 @@ const Login = () => {
   // Renderização da Tela de Confirmação de E-mail
   if (verificationSent) {
       return (
-        <div className="flex-grow flex items-center justify-center p-6 pt-24 relative">
-            <div className="w-full max-w-md bg-neutral-900 border border-neutral-700 p-8 text-center shadow-2xl animate-in fade-in zoom-in duration-500">
+      <div className="flex-grow flex items-center justify-center px-4 sm:px-6 py-6 pt-24 relative">
+        <div className="w-full max-w-md bg-neutral-900 border border-neutral-700 p-6 sm:p-8 text-center shadow-2xl animate-in fade-in zoom-in duration-500">
                 <div className="mb-6 flex justify-center">
                     <div className="w-16 h-16 rounded-full border-2 border-white flex items-center justify-center">
                         <span className="text-3xl font-display font-bold">@</span>
@@ -172,11 +172,11 @@ const Login = () => {
   }
 
   return (
-    <div className="flex-grow flex items-center justify-center p-6 pt-24 relative">
+    <div className="flex-grow flex items-center justify-center px-4 sm:px-6 py-6 pt-24 relative">
         <div className="absolute left-0 bottom-0 w-64 h-64 border-t border-r border-neutral-800 rounded-tr-full opacity-30 pointer-events-none" />
-        <div className="absolute right-0 top-0 w-96 h-96 border-b border-l border-neutral-800 rounded-bl-full opacity-30 pointer-events-none" />
+        <div className="absolute right-0 top-0 w-64 h-64 md:w-96 md:h-96 border-b border-l border-neutral-800 rounded-bl-full opacity-30 pointer-events-none" />
 
-      <div ref={formRef} className="w-full max-w-md bg-black border border-neutral-800 p-8 md:p-12 relative z-10 auth-form shadow-2xl">
+      <div ref={formRef} className="w-full max-w-md bg-black border border-neutral-800 p-6 sm:p-8 md:p-12 relative z-10 auth-form shadow-2xl">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-display font-bold mb-2 uppercase">
             {isRegister ? 'Passo 1: Acesso' : 'Acesso ao Sistema'}
