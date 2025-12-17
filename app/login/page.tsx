@@ -75,7 +75,7 @@ export default function Login() {
     <div className="flex-grow flex items-center justify-center p-6 pt-24">
       <div ref={formRef} className="w-full max-w-md bg-black border border-neutral-800 p-8">
         <h2 className="text-3xl font-display font-bold mb-6 text-center">{isRegister ? 'Cadastro' : 'Login'}</h2>
-        {errorMsg && <div className="mb-4 text-red-500 text-center text-sm">{errorMsg}</div>}
+        {errorMsg && <div className="mb-4 text-violet-700 text-center text-sm">{errorMsg}</div>}
         <form className="space-y-5" onSubmit={handleAuth}>
           <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <Input label="Senha" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />

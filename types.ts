@@ -39,4 +39,6 @@ export interface Card {
   type: CardType;
   status: 'official' | 'pending' | 'approved' | 'rejected';
   created_by?: string;
+  created_at?: string;
+  creator?: Pick<UserProfile, 'id' | 'username' | 'avatar_url'> | null;
 }

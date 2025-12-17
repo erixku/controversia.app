@@ -31,7 +31,7 @@ const SetupProfile: React.FC = () => {
     }
   }, [user, authLoading, navigate]);
 
-  const uploadAvatar = async (profileId: string): Promise<string | null> => {
+    const uploadAvatar = async (userId: string): Promise<string | null> => {
     if (!avatarBlob) return null;
     
     try {
@@ -48,9 +48,9 @@ const SetupProfile: React.FC = () => {
             return null;
         }
 
-        // Gerar path estruturado: avatars/{profile_id}/{timestamp}.webp
+        // Gerar path estruturado: avatars/{auth_user_id}/{timestamp}.webp
         const timestamp = Date.now();
-        const filePath = `${profileId}/${timestamp}.webp`;
+        const filePath = `${userId}/${timestamp}.webp`;
         
         const { error: uploadError } = await supabase.storage
             .from('avatars')
@@ -61,9 +61,9 @@ const SetupProfile: React.FC = () => {
             });
 
         if (uploadError) throw uploadError;
-        
-        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        return data.publicUrl;
+
+        // Salva o PATH; a renderização usa signed URL
+        return filePath;
     } catch (err: any) {
         console.error("Erro upload avatar:", err);
         setErrorMsg(err.message || 'Erro ao fazer upload da foto.');
@@ -87,22 +87,9 @@ const SetupProfile: React.FC = () => {
 
         // 1. Upload Avatar se houver nova imagem
         if (avatarBlob) {
-            // Precisa do profile.id, então garantir que existe
-            const { data: currentProfile } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('auth_id', user.id)
-                .single();
-            
-            if (!currentProfile) {
-                setErrorMsg('Perfil não encontrado. Tente relogar.');
-                setLoading(false);
-                return;
-            }
-
-            const url = await uploadAvatar(currentProfile.id);
-            if (url) {
-                avatarUrl = url;
+            const path = await uploadAvatar(user.id);
+            if (path) {
+                avatarUrl = path;
             } else {
                 // Se falhou o upload, pára aqui
                 setLoading(false);

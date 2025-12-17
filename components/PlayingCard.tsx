@@ -1,4 +1,5 @@
 import React from 'react';
+import AvatarImage from './AvatarImage';
 
 export type CardVariant = 'black' | 'white';
 
@@ -79,8 +80,8 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
         {authorName ? (
           <div className="flex items-center gap-1.5 opacity-70">
             {authorAvatar && (
-              <img 
-                src={authorAvatar} 
+              <AvatarImage
+                pathOrUrl={authorAvatar}
                 alt={authorName}
                 className="w-4 h-4 rounded-full object-cover border border-current"
               />

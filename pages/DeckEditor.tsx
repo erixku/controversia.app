@@ -12,6 +12,12 @@ interface DeckCard {
   position: number | null;
   status: string;
   created_at: string;
+  created_by?: string;
+  creator?: {
+    id: string;
+    username: string;
+    avatar_url?: string | null;
+  } | null;
 }
 
 interface Deck {
@@ -81,7 +87,10 @@ const DeckEditor: React.FC = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('deck_cards')
-        .select('*')
+        .select(`
+          *,
+          creator:profiles!created_by(id, username, avatar_url)
+        `)
         .eq('deck_id', id)
         .order('position', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true });
@@ -400,6 +409,8 @@ const DeckEditor: React.FC = () => {
                 <PlayingCard
                   text={card.text}
                   variant={card.type}
+                  authorName={card.creator?.username ?? null}
+                  authorAvatar={card.creator?.avatar_url ?? null}
                 />
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                   <button
@@ -512,6 +523,8 @@ const DeckEditor: React.FC = () => {
                     <PlayingCard
                       text={cardText}
                       variant={cardType}
+                      authorName={profile?.username ?? null}
+                      authorAvatar={profile?.avatar_url ?? null}
                     />
                   </div>
                 </div>

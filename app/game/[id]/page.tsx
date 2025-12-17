@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import animeBase from 'animejs';
 import PlayingCard from '../../../components/PlayingCard';
 import CardCreatorModal from '../../../components/CardCreatorModal';
+import AvatarImage from '../../../components/AvatarImage';
 import { supabase } from '../../../services/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { GamePlayer, GameRoom as GameRoomType } from '../../../types';
@@ -99,7 +100,7 @@ export default function GameRoomPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="flex flex-col h-screen w-full bg-neutral-900 overflow-hidden relative">
-      <CardCreatorModal isOpen={isCreatorModalOpen} onClose={() => setIsCreatorModalOpen(false)} />
+            <CardCreatorModal isOpen={isCreatorModalOpen} onClose={() => setIsCreatorModalOpen(false)} gameId={id} />
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] brightness-100 contrast-150"></div>
 
       <div className="h-20 bg-black border-b border-neutral-800 flex items-center justify-between px-6 z-20">
@@ -120,7 +121,7 @@ export default function GameRoomPage({ params }: { params: { id: string } }) {
                 {players.map((p, i) => (
                     <div key={p.id} className="w-10 h-10 rounded-full border-2 border-black bg-neutral-800 flex items-center justify-center overflow-hidden hover:-translate-y-2 transition-transform cursor-help relative group" title={`${p.profile?.username}: ${p.score} Pontos`}>
                         {p.profile?.avatar_url ? (
-                            <img src={p.profile.avatar_url} alt={p.profile.username} className="w-full h-full object-cover" />
+                            <AvatarImage pathOrUrl={p.profile.avatar_url} alt={p.profile.username} className="w-full h-full object-cover" />
                         ) : (
                             <span className="text-xs font-bold font-display text-white">{p.profile?.username?.substring(0,2).toUpperCase() || `P${i}`}</span>
                         )}

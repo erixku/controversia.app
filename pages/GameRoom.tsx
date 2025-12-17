@@ -4,6 +4,7 @@ import animeBase from 'animejs';
 import PlayingCard from '../components/PlayingCard';
 import Button from '../components/Button';
 import CardCreatorModal from '../components/CardCreatorModal';
+import AvatarImage from '../components/AvatarImage';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { GamePlayer, GameRoom as GameRoomType } from '../types';
@@ -20,13 +21,15 @@ interface GameRound {
   pick_count: number;
   czar_player_id: string;
   winner_submission_id: string | null;
-  black_card?: { id: string; text: string } | null;
+  black_card?: { id: string; text: string; creator?: { username: string; avatar_url?: string | null } | null } | null;
 }
 
 interface HandCard {
   handId: string;
   cardId: string;
   text: string;
+  authorName?: string | null;
+  authorAvatar?: string | null;
 }
 
 interface PlayedCard {
@@ -36,6 +39,8 @@ interface PlayedCard {
   submissionSeq: number;
   isRevealed: boolean;
   isWinner: boolean;
+  authorName?: string | null;
+  authorAvatar?: string | null;
   playerId?: string;
   playerName?: string;
 }
@@ -404,7 +409,11 @@ const GameRoom: React.FC = () => {
           pick_count,
           czar_player_id,
           winner_submission_id,
-          black_card:cards!black_card_id(id, text)
+          black_card:cards!black_card_id(
+            id,
+            text,
+            creator:profiles!created_by(username, avatar_url)
+          )
         `)
         .eq('game_id', id)
         .order('round_number', { ascending: false })
@@ -477,7 +486,12 @@ const GameRoom: React.FC = () => {
         id,
         submission_id,
         seq,
-        card:cards(id, text)
+        card:cards(
+          id,
+          text,
+          created_by,
+          creator:profiles!created_by(username, avatar_url)
+        )
       `)
       .eq('game_id', id)
       .eq('round_id', roundId)
@@ -496,7 +510,9 @@ const GameRoom: React.FC = () => {
       submissionSeq: r.seq,
       text: r.card?.text ?? '',
       isRevealed: status === 'completed',
-      isWinner: !!winnerSubmissionId && r.submission_id === winnerSubmissionId
+      isWinner: !!winnerSubmissionId && r.submission_id === winnerSubmissionId,
+      authorName: r.card?.creator?.username ?? null,
+      authorAvatar: r.card?.creator?.avatar_url ?? null
     }));
 
     // Only after completion do we fetch identities (and only then RLS allows it).
@@ -533,7 +549,16 @@ const GameRoom: React.FC = () => {
 
     const { data, error } = await supabase
       .from('game_hands')
-      .select(`id, card_id, card:cards(id, text)`)
+      .select(`
+        id,
+        card_id,
+        card:cards(
+          id,
+          text,
+          created_by,
+          creator:profiles!created_by(username, avatar_url)
+        )
+      `)
       .eq('game_id', id)
       .eq('player_id', profile.id)
       .order('created_at', { ascending: true });
@@ -547,7 +572,9 @@ const GameRoom: React.FC = () => {
     const mapped: HandCard[] = (data || []).map((r: any) => ({
       handId: r.id,
       cardId: r.card_id,
-      text: r.card?.text ?? ''
+      text: r.card?.text ?? '',
+      authorName: r.card?.creator?.username ?? null,
+      authorAvatar: r.card?.creator?.avatar_url ?? null
     }));
     setHand(mapped);
     setGameplayError(null);
@@ -627,7 +654,10 @@ const GameRoom: React.FC = () => {
     if (!id) return;
     const { data } = await supabase
       .from('cards')
-      .select('*')
+      .select(`
+        *,
+        creator:profiles!created_by(id, username, avatar_url)
+      `)
       .eq('game_id', id)
       .eq('status', 'approved')
       .order('created_at', { ascending: false });
@@ -674,7 +704,8 @@ const GameRoom: React.FC = () => {
                 deck_id: selectedDeckId,
                 text: card.text,
                 type: card.type,
-                status: 'approved'
+            status: 'approved',
+            created_by: card.created_by ?? null
             });
             
           if (deckError) {
@@ -1042,8 +1073,8 @@ const GameRoom: React.FC = () => {
                         <div className="flex-grow">
                           <div className="flex items-center gap-2 mb-2">
                             {card.creator?.avatar_url && (
-                              <img 
-                                src={card.creator.avatar_url} 
+                              <AvatarImage
+                                pathOrUrl={card.creator.avatar_url}
                                 alt={card.creator.username}
                                 className="w-6 h-6 rounded-full object-cover"
                               />
@@ -1149,7 +1180,7 @@ const GameRoom: React.FC = () => {
                             <button
                                 onClick={handleClearCards}
                                 disabled={clearingCards}
-                                className="px-3 py-1.5 border border-red-900 text-red-500 text-xs font-display font-bold uppercase hover:bg-red-900/20 disabled:opacity-50 whitespace-nowrap"
+                            className="px-3 py-1.5 border border-violet-700/50 text-violet-700 text-xs font-display font-bold uppercase hover:bg-violet-700/10 disabled:opacity-50 whitespace-nowrap"
                             >
                                 {clearingCards ? '...' : 'Limpar Tudo'}
                             </button>
@@ -1174,6 +1205,20 @@ const GameRoom: React.FC = () => {
                       >
                         <div className="flex-1">
                           <p className="font-display font-bold text-lg leading-tight">{card.text}</p>
+                          {card.creator?.username && (
+                            <div className="flex items-center gap-2 mt-2">
+                              {card.creator?.avatar_url && (
+                                <AvatarImage
+                                  pathOrUrl={card.creator.avatar_url}
+                                  alt={card.creator.username}
+                                  className="w-5 h-5 rounded-full object-cover"
+                                />
+                              )}
+                              <span className={`text-xs font-display font-bold uppercase tracking-wider ${card.type === 'white' ? 'text-neutral-500' : 'text-neutral-400'}`}>
+                                Sugerida por {card.creator.username}
+                              </span>
+                            </div>
+                          )}
                           <p className={`text-xs mt-2 ${card.type === 'white' ? 'text-neutral-500' : 'text-neutral-400'}`}>
                             Tipo: {card.type === 'white' ? 'Branca' : 'Preta'} • 
                             Criado em {new Date(card.created_at).toLocaleDateString('pt-BR')}
@@ -1183,8 +1228,8 @@ const GameRoom: React.FC = () => {
                           onClick={() => handleDeleteCard(card.id)}
                           className={`ml-4 px-3 py-1 text-xs font-display font-bold uppercase border transition-colors ${
                               card.type === 'white'
-                                ? 'border-neutral-300 text-neutral-500 hover:border-red-500 hover:text-red-500'
-                                : 'border-neutral-700 text-neutral-500 hover:border-red-500 hover:text-red-500'
+                                ? 'border-neutral-300 text-neutral-500 hover:border-violet-700 hover:text-violet-700'
+                                : 'border-neutral-700 text-neutral-500 hover:border-violet-700 hover:text-violet-700'
                           }`}
                         >
                           Remover
@@ -1256,7 +1301,7 @@ const GameRoom: React.FC = () => {
                     ) : roomData?.status === 'in_progress' ? (
                         <button 
                             onClick={handleEndGame}
-                            className="flex items-center space-x-2 text-xs font-display font-bold uppercase tracking-widest text-red-500 hover:text-red-400 transition-colors border border-red-900/50 hover:border-red-500 px-3 py-1.5 rounded-sm"
+                        className="flex items-center space-x-2 text-xs font-display font-bold uppercase tracking-widest text-violet-700 hover:text-violet-600 transition-colors border border-violet-700/30 hover:border-violet-700 px-3 py-1.5 rounded-sm"
                         >
                             <span>Terminar Jogo</span>
                         </button>
@@ -1287,7 +1332,7 @@ const GameRoom: React.FC = () => {
                         title={`${p.profile?.username}: ${p.score} Pontos`}
                     >
                         {p.profile?.avatar_url ? (
-                            <img src={p.profile.avatar_url} alt={p.profile.username} className="w-full h-full object-cover" />
+                          <AvatarImage pathOrUrl={p.profile.avatar_url} alt={p.profile.username} className="w-full h-full object-cover" />
                         ) : (
                             <span className="text-xs font-bold font-display text-white">
                                 {p.profile?.username?.substring(0,2).toUpperCase() || `P${i}`}
@@ -1329,6 +1374,8 @@ const GameRoom: React.FC = () => {
                 <PlayingCard 
                     variant="black" 
                     text={blackCardText} 
+                authorName={round?.black_card?.creator?.username ?? null}
+                authorAvatar={round?.black_card?.creator?.avatar_url ?? null}
                     className="shadow-2xl shadow-black/80"
                 />
             </div>
@@ -1397,6 +1444,8 @@ const GameRoom: React.FC = () => {
                               variant="white"
                               text={round?.status === 'picking' ? '' : card.text}
                               isFaceDown={round?.status === 'picking'}
+                              authorName={card.authorName ?? null}
+                              authorAvatar={card.authorAvatar ?? null}
                               className={`shadow-xl hover:scale-100 hover:z-0 ${
                                 isWinnerPile ? 'ring-4 ring-white rounded-xl' : ''
                               } ${
@@ -1494,6 +1543,8 @@ const GameRoom: React.FC = () => {
                             variant="white"
                             text={isCzar ? '' : card.text}
                             isFaceDown={isCzar}
+                            authorName={card.authorName ?? null}
+                            authorAvatar={card.authorAvatar ?? null}
                             className="shadow-2xl hover:scale-100 hover:z-0"
                           />
                         </div>

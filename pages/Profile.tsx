@@ -5,6 +5,7 @@ import { supabase } from '../services/supabase';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import AvatarEditor from '../components/AvatarEditor';
+import AvatarImage from '../components/AvatarImage';
 
 const Profile: React.FC = () => {
   const { user, profile, loading: authLoading } = useAuth();
@@ -60,7 +61,7 @@ const Profile: React.FC = () => {
     }
   };
 
-  const uploadAvatar = async (profileId: string): Promise<string | null> => {
+  const uploadAvatar = async (userId: string): Promise<string | null> => {
     if (!avatarBlob) return null;
     
     try {
@@ -77,9 +78,9 @@ const Profile: React.FC = () => {
         return null;
       }
 
-      // Gerar path estruturado: avatars/{profile_id}/{timestamp}.webp
+      // Gerar path estruturado: avatars/{auth_user_id}/{timestamp}.webp
       const timestamp = Date.now();
-      const filePath = `${profileId}/${timestamp}.webp`;
+      const filePath = `${userId}/${timestamp}.webp`;
       
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -93,9 +94,9 @@ const Profile: React.FC = () => {
         console.error('Erro ao fazer upload:', uploadError);
         throw uploadError;
       }
-      
-      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      return data.publicUrl;
+
+      // Salva o PATH; a renderização usa signed URL (funciona com bucket privado)
+      return filePath;
     } catch (err: any) {
       console.error('Erro upload avatar:', err);
       setErrorMsg(`Erro ao enviar foto: ${err.message}`);
@@ -121,9 +122,9 @@ const Profile: React.FC = () => {
 
       // Upload avatar se houver nova imagem
       if (avatarBlob) {
-        const url = await uploadAvatar(profile.id);
-        if (url) {
-          avatarUrl = url;
+        const path = await uploadAvatar(user.id);
+        if (path) {
+          avatarUrl = path;
         } else {
           // Se falhou o upload, não continua
           setLoading(false);
@@ -218,9 +219,9 @@ const Profile: React.FC = () => {
         <div className="bg-black border border-neutral-800 p-8 mb-6 text-center">
           <div className="flex flex-col items-center mb-4">
             {profile?.avatar_url && (
-              <img 
-                src={profile.avatar_url} 
-                alt={profile.username} 
+              <AvatarImage
+                pathOrUrl={profile.avatar_url}
+                alt={profile.username}
                 className="w-24 h-24 rounded-full border-2 border-white mb-4 object-cover"
               />
             )}

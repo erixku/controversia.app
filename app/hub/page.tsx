@@ -115,7 +115,7 @@ export default function GameHub() {
     switch(status) {
         case 'waiting': return { text: 'Aguardando', color: 'text-neutral-400', border: 'border-neutral-600', dot: 'bg-transparent border border-neutral-400' };
         case 'in_progress': return { text: 'Em Progresso', color: 'text-white', border: 'border-white', dot: 'bg-white animate-pulse' };
-        case 'finished': return { text: 'Finalizado', color: 'text-red-900', border: 'border-red-900', dot: 'bg-red-900' };
+        case 'finished': return { text: 'Finalizado', color: 'text-violet-700', border: 'border-violet-700', dot: 'bg-violet-700' };
         default: return { text: 'Desconhecido', color: 'text-neutral-500', border: 'border-neutral-800', dot: 'bg-neutral-800' };
     }
   };

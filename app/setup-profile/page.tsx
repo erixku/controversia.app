@@ -33,14 +33,18 @@ export default function SetupProfile() {
   const uploadAvatar = async (userId: string): Promise<string | null> => {
     if (!avatarBlob) return null;
     try {
-        const filePath = `${userId}/${Date.now()}.jpg`;
+        const filePath = `${userId}/${Date.now()}.webp`;
         const { error: uploadError } = await supabase.storage
             .from('avatars')
-            .upload(filePath, avatarBlob, { upsert: true });
+            .upload(filePath, avatarBlob, { 
+              upsert: true,
+              contentType: 'image/webp',
+              cacheControl: '3600'
+            });
 
         if (uploadError) throw uploadError;
-        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        return data.publicUrl;
+        // Salva o PATH; a renderização usa signed URL
+        return filePath;
     } catch (err) {
         console.error("Erro upload avatar:", err);
         return null;
@@ -97,7 +101,7 @@ export default function SetupProfile() {
         </div>
 
         {errorMsg && (
-            <div className="mb-6 p-3 border border-red-900 bg-red-900/10 text-red-500 text-xs text-center uppercase">{errorMsg}</div>
+            <div className="mb-6 p-3 border border-violet-700/30 bg-violet-700/10 text-violet-700 text-xs text-center uppercase">{errorMsg}</div>
         )}
 
         <form onSubmit={handleSave} className="flex flex-col items-center space-y-6">
