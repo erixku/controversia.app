@@ -30,6 +30,17 @@ const Navbar: React.FC = () => {
     setMobileOpen(false);
   }, [location.pathname]);
 
+  // Trava o scroll do body enquanto o menu mobile está aberto
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileOpen]);
+
   return (
     <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-neutral-900">
       <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
@@ -82,9 +93,19 @@ const Navbar: React.FC = () => {
 
       {/* Mobile menu overlay */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-[60] bg-black/90 backdrop-blur-md">
+        <div
+          className="md:hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-md"
+          onClick={() => setMobileOpen(false)}
+          role="presentation"
+        >
           <div className="max-w-7xl mx-auto px-4 pt-24 pb-10">
-            <div className="flex flex-col gap-6">
+            <div
+              className="bg-black border border-neutral-800 p-6"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="flex flex-col gap-6">
               <Link to="/sobre" className={`text-xl font-serif italic transition-all duration-300 ${isActive('/sobre')}`}>
                 O Projeto
               </Link>
@@ -113,6 +134,7 @@ const Navbar: React.FC = () => {
                     Sair
                   </button>
                 )}
+              </div>
               </div>
             </div>
           </div>

@@ -1268,8 +1268,17 @@ const GameRoom: React.FC = () => {
       {/* --- TOP BAR: INFO & OPPONENTS --- */}
         <div className="h-20 bg-black border-b border-neutral-800 flex items-center justify-between px-4 md:px-6 z-20">
         <div className="flex items-center space-x-3 md:space-x-4 min-w-0">
-          <button onClick={handleLeaveRoom} className="text-white hover:text-neutral-400 font-display text-sm flex-shrink-0">
-            <span className="md:hidden">←</span>
+          <button
+            onClick={handleLeaveRoom}
+            className="text-white hover:text-neutral-400 font-display text-sm flex-shrink-0"
+            aria-label="Sair da sala"
+            title="Sair"
+          >
+            <span className="md:hidden inline-flex items-center justify-center w-9 h-9 border border-neutral-800 hover:border-white transition-colors">
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </span>
             <span className="hidden md:inline">← SAIR</span>
           </button>
             <div className="h-8 w-px bg-neutral-800" />
@@ -1283,7 +1292,7 @@ const GameRoom: React.FC = () => {
             </div>
         </div>
         
-        <div className="flex items-center space-x-3 md:space-x-6 flex-shrink-0">
+        <div className="flex items-center space-x-2 md:space-x-6 flex-shrink-0">
             {isOwner && (
                 <>
                     {roomData?.status === 'waiting' ? (
@@ -1296,26 +1305,42 @@ const GameRoom: React.FC = () => {
                                     : 'text-black bg-white border-white hover:bg-neutral-200'
                             }`}
                             title={players.length < 3 ? "Mínimo de 3 jogadores" : "Iniciar o jogo"}
+                            aria-label="Iniciar jogo"
                         >
-                  <span className="md:hidden">Iniciar</span>
-                  <span className="hidden md:inline">Iniciar Jogo</span>
+                            <span className="md:hidden inline-flex items-center justify-center w-9 h-9 -my-1 -mx-1">
+                              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden="true">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </span>
+                            <span className="hidden md:inline">Iniciar Jogo</span>
                         </button>
                     ) : roomData?.status === 'in_progress' ? (
                         <button 
                             onClick={handleEndGame}
                         className="flex items-center space-x-2 text-xs font-display font-bold uppercase tracking-widest text-violet-700 hover:text-violet-600 transition-colors border border-violet-700/30 hover:border-violet-700 px-3 py-1.5 rounded-sm"
+                        aria-label="Terminar jogo"
                         >
-                  <span className="md:hidden">Terminar</span>
-                  <span className="hidden md:inline">Terminar Jogo</span>
+                            <span className="md:hidden inline-flex items-center justify-center w-9 h-9 -my-1 -mx-1">
+                              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden="true">
+                                <path d="M7 7h10v10H7z" />
+                              </svg>
+                            </span>
+                            <span className="hidden md:inline">Terminar Jogo</span>
                         </button>
                     ) : null}
 
                     <button 
                         onClick={() => setIsAdminModalOpen(true)}
                         className="flex items-center space-x-2 text-xs font-display font-bold uppercase tracking-widest text-neutral-400 hover:text-white transition-colors border border-neutral-700 hover:border-white px-3 py-1.5 rounded-sm"
+                        aria-label="Abrir configurações"
                     >
-                <span className="md:hidden">Config</span>
-                <span className="hidden md:inline">Configurações</span>
+                        <span className="md:hidden inline-flex items-center justify-center w-9 h-9 -my-1 -mx-1">
+                          <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
+                            <path d="M19.4 15a7.8 7.8 0 0 0 .1-2l2-1.5-2-3.5-2.4.7a7.7 7.7 0 0 0-1.7-1l-.3-2.5h-4l-.3 2.5a7.7 7.7 0 0 0-1.7 1L4.7 8l-2 3.5 2 1.5a7.8 7.8 0 0 0 .1 2l-2 1.5 2 3.5 2.4-.7a7.7 7.7 0 0 0 1.7 1l.3 2.5h4l.3-2.5a7.7 7.7 0 0 0 1.7-1l2.4.7 2-3.5-2-1.5z" />
+                          </svg>
+                        </span>
+                        <span className="hidden md:inline">Configurações</span>
                     </button>
                 </>
             )}
