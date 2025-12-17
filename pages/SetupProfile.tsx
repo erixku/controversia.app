@@ -5,6 +5,7 @@ import Button from '../components/Button';
 import AvatarEditor from '../components/AvatarEditor';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabase';
+import { uploadAvatarWithFallback } from '../services/avatarStorage';
 
 const SetupProfile: React.FC = () => {
   const { user, profile, loading: authLoading } = useAuth();
@@ -31,45 +32,22 @@ const SetupProfile: React.FC = () => {
     }
   }, [user, authLoading, navigate]);
 
-    const uploadAvatar = async (userId: string): Promise<string | null> => {
-    if (!avatarBlob) return null;
-    
-    try {
-        // Validar tamanho (max 5MB)
+    const validateAvatar = (): boolean => {
+        if (!avatarBlob) return true;
+
         if (avatarBlob.size > 5 * 1024 * 1024) {
             setErrorMsg('A imagem deve ter no máximo 5MB.');
-            return null;
+            return false;
         }
 
-        // Validar tipo
         const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
         if (!validTypes.includes(avatarBlob.type)) {
             setErrorMsg('Formato inválido. Use JPG, PNG ou WebP.');
-            return null;
+            return false;
         }
 
-        // Gerar path estruturado: avatars/{auth_user_id}/{timestamp}.webp
-        const timestamp = Date.now();
-        const filePath = `${userId}/${timestamp}.webp`;
-        
-        const { error: uploadError } = await supabase.storage
-            .from('avatars')
-            .upload(filePath, avatarBlob, { 
-                contentType: 'image/webp',
-                cacheControl: '3600',
-                upsert: false // Evita sobrescrever
-            });
-
-        if (uploadError) throw uploadError;
-
-        // Salva o PATH; a renderização usa signed URL
-        return filePath;
-    } catch (err: any) {
-        console.error("Erro upload avatar:", err);
-        setErrorMsg(err.message || 'Erro ao fazer upload da foto.');
-        return null;
-    }
-  };
+        return true;
+    };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,17 +63,39 @@ const SetupProfile: React.FC = () => {
     try {
         let avatarUrl = profile?.avatar_url;
 
-        // 1. Upload Avatar se houver nova imagem
-        if (avatarBlob) {
-            const path = await uploadAvatar(user.id);
-            if (path) {
-                avatarUrl = path;
-            } else {
-                // Se falhou o upload, pára aqui
-                setLoading(false);
-                return;
-            }
-        }
+                if (!validateAvatar()) {
+                    setLoading(false);
+                    return;
+                }
+
+                // Buscar profile id (para compatibilidade com policies que usam profiles.id)
+                const { data: currentProfile, error: profileIdErr } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('auth_id', user.id)
+                    .maybeSingle();
+
+                if (profileIdErr) {
+                    console.warn('Não foi possível buscar profiles.id:', profileIdErr.message);
+                }
+
+                // 1. Upload Avatar se houver nova imagem
+                if (avatarBlob) {
+                    try {
+                        const { path } = await uploadAvatarWithFallback({
+                            authUserId: user.id,
+                            profileId: currentProfile?.id ?? null,
+                            blob: avatarBlob,
+                            upsert: false
+                        });
+                        avatarUrl = path;
+                    } catch (e: any) {
+                        console.error('Erro upload avatar:', e);
+                        setErrorMsg(e?.message || 'Erro ao fazer upload da foto.');
+                        setLoading(false);
+                        return;
+                    }
+                }
 
         // 2. Validar username único (se diferente do atual)
         if (!profile || username.trim().toLowerCase() !== profile.username?.toLowerCase()) {

@@ -6,6 +6,7 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import AvatarEditor from '../components/AvatarEditor';
 import AvatarImage from '../components/AvatarImage';
+import { uploadAvatarWithFallback } from '../services/avatarStorage';
 
 const Profile: React.FC = () => {
   const { user, profile, loading: authLoading } = useAuth();
@@ -61,47 +62,21 @@ const Profile: React.FC = () => {
     }
   };
 
-  const uploadAvatar = async (userId: string): Promise<string | null> => {
-    if (!avatarBlob) return null;
-    
-    try {
-      // Validar tamanho (max 5MB)
-      if (avatarBlob.size > 5 * 1024 * 1024) {
-        setErrorMsg('A imagem deve ter no máximo 5MB.');
-        return null;
-      }
+  const validateAvatar = (): boolean => {
+    if (!avatarBlob) return true;
 
-      // Validar tipo
-      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
-      if (!validTypes.includes(avatarBlob.type)) {
-        setErrorMsg('Formato inválido. Use JPG, PNG ou WebP.');
-        return null;
-      }
-
-      // Gerar path estruturado: avatars/{auth_user_id}/{timestamp}.webp
-      const timestamp = Date.now();
-      const filePath = `${userId}/${timestamp}.webp`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, avatarBlob, { 
-          contentType: 'image/webp',
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Erro ao fazer upload:', uploadError);
-        throw uploadError;
-      }
-
-      // Salva o PATH; a renderização usa signed URL (funciona com bucket privado)
-      return filePath;
-    } catch (err: any) {
-      console.error('Erro upload avatar:', err);
-      setErrorMsg(`Erro ao enviar foto: ${err.message}`);
-      return null;
+    if (avatarBlob.size > 5 * 1024 * 1024) {
+      setErrorMsg('A imagem deve ter no máximo 5MB.');
+      return false;
     }
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (!validTypes.includes(avatarBlob.type)) {
+      setErrorMsg('Formato inválido. Use JPG, PNG ou WebP.');
+      return false;
+    }
+
+    return true;
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -120,13 +95,24 @@ const Profile: React.FC = () => {
     try {
       let avatarUrl = profile.avatar_url;
 
+      if (!validateAvatar()) {
+        setLoading(false);
+        return;
+      }
+
       // Upload avatar se houver nova imagem
       if (avatarBlob) {
-        const path = await uploadAvatar(user.id);
-        if (path) {
+        try {
+          const { path } = await uploadAvatarWithFallback({
+            authUserId: user.id,
+            profileId: profile.id,
+            blob: avatarBlob,
+            upsert: false
+          });
           avatarUrl = path;
-        } else {
-          // Se falhou o upload, não continua
+        } catch (e: any) {
+          console.error('Erro upload avatar:', e);
+          setErrorMsg(e?.message || 'Erro ao enviar foto.');
           setLoading(false);
           return;
         }
